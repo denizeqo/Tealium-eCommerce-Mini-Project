@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Tealium Suite">
+    <test name="MiniProject 1-6">
+        <classes>
+            <class name="tests.MiniProjectTests_1_to_6"/>
+        </classes>
+    </test>
+</suite>
