@@ -1,54 +1,48 @@
 package pages;
 
-import org.openqa.selenium.*;
-import pages.components.TopNavComponent;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.interactions.Actions;
 import utils.WaitUtils;
-import pages.ProductListPage;
 
 public class HomePage {
-
     private final WebDriver driver;
     private final WaitUtils wait;
+    private final Actions actions;
 
-    private final String baseUrl = "https://ecommerce.tealiumdemo.com/";
-
-    // Top links
+    // Locators
     private final By accountLink = By.cssSelector("a.skip-account");
-    private final By accountDropdown = By.cssSelector("#header-account"); // dropdown container
-
-    // Dropdown items (fallbacks included)
-    private final By registerLink = By.cssSelector("#header-account a[title='Register']");
-    private final By signInLink = By.cssSelector("#header-account a[title='Log In'], #header-account a[title='Login'], #header-account a[title='Sign In']");
-    private final By logoutLink = By.cssSelector("#header-account a[title='Log Out'], #header-account a[title='Logout']");
-
-    // Welcome username area
+    private final By accountDropdown = By.cssSelector("#header-account");
     private final By welcomeText = By.cssSelector("p.welcome-msg, .welcome-msg");
+
+    // Nav Locators
+    private final By navWomen = By.linkText("Women");
+    private final By navMen = By.linkText("Men");
+    private final By viewAllWomen = By.linkText("View All Women");
+    private final By viewAllMen = By.linkText("View All Men");
 
     public HomePage(WebDriver driver, WaitUtils wait) {
         this.driver = driver;
         this.wait = wait;
+        this.actions = new Actions(driver);
     }
 
     public HomePage open() {
-        driver.get(baseUrl);
-        wait.jsReady();
+        System.out.println("Navigating to URL..."); // Debug log
+        driver.get("https://ecommerce.tealiumdemo.com/");
+
+        // REMOVE wait.jsReady();
+        // Just return this. It's safer to wait for specific elements later.
         return this;
     }
-
-    public HomePage clickAccount() {
-        wait.clickable(accountLink).click();
-        // wait dropdown to be present (not always visible instantly)
-        wait.visible(accountDropdown);
-        return this;
-    }
-
+    // *** THIS IS THE METHOD YOU ARE LOOKING FOR ***
     public RegisterPage goToRegister() {
+        // We use direct URL for stability, but you can also click the menu
         driver.get("https://ecommerce.tealiumdemo.com/customer/account/create/");
         wait.jsReady();
+        // This returns the RegisterPage object. If RegisterPage.java is missing, this line causes the error.
         return new RegisterPage(driver, wait);
     }
-
-
 
     public LoginPage goToSignIn() {
         driver.get("https://ecommerce.tealiumdemo.com/customer/account/login/");
@@ -56,65 +50,22 @@ public class HomePage {
         return new LoginPage(driver, wait);
     }
 
-    public boolean isUsernameDisplayed(String username) {
-        String text = wait.visible(welcomeText).getText();
-        return text != null && text.toLowerCase().contains(username.toLowerCase());
-    }
-
-    public HomePage logout() {
-        clickAccount();
-        wait.safeClick(logoutLink);
+    public void logout() {
+        driver.get("https://ecommerce.tealiumdemo.com/customer/account/logout/");
         wait.jsReady();
-        return this;
-    }
-    private final By wishlistMenuLink = By.cssSelector("#header-account a[href*='wishlist']");
-
-    public int getWishlistCountFromAccountMenu() {
-        clickAccount();
-        String txt = wait.visible(wishlistMenuLink).getText(); // e.g. "My Wish List (2 items)"
-        // extract first number inside parentheses
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\((\\d+)").matcher(txt);
-        if (m.find()) return Integer.parseInt(m.group(1));
-        return 0;
     }
 
+    public boolean isUsernameDisplayed(String username) {
+        try {
+            return wait.visible(welcomeText).getText().toLowerCase().contains(username.toLowerCase());
+        } catch (Exception e) { return false; }
+    }
+
+    // Menu Logic
     public HomePage hoverMenu(String menuName) {
-        TopNavComponent nav = new TopNavComponent(driver, wait);
-        switch (normalizeMenu(menuName)) {
-            case "women":
-                nav.hoverWomen();
-                break;
-            case "men":
-                nav.hoverMen();
-                break;
-            case "sale":
-                nav.hoverSale();
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown menu: " + menuName);
-        }
+        By locator = menuName.equalsIgnoreCase("women") ? navWomen : navMen;
+        actions.moveToElement(wait.visible(locator)).perform();
         return this;
     }
 
-    public ProductListPage clickViewAll(String menuName) {
-        TopNavComponent nav = new TopNavComponent(driver, wait);
-        switch (normalizeMenu(menuName)) {
-            case "women":
-                nav.clickViewAllWomen();
-                break;
-            case "men":
-                nav.clickViewAllMen();
-                break;
-            case "sale":
-                nav.clickViewAllSale();
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown menu: " + menuName);
-        }
-        return new ProductListPage(driver, wait);
-    }
-
-    private String normalizeMenu(String menuName) {
-        return menuName == null ? "" : menuName.trim().toLowerCase();
-    }
 }

@@ -2,7 +2,7 @@
 <suite name="Tealium Suite">
     <test name="MiniProject 1-6">
         <classes>
-            <class name="tests.MiniProjectTests_1_to_6"/>
+            <class name="tests.FullProjectTests"/>
         </classes>
     </test>
 </suite>
